@@ -90,17 +90,20 @@ training_data_list = training_data_file.readlines()
 training_data_file.close()
 
 # pre-process each entry and train the neural network
-for record in training_data_list:
-    # split entries with commas
-    all_values = record.split(',')
-    # scale and shift the entries
-    inputs = (numpy.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
-    # create target values
-    targets = numpy.zeros(output_nodes) + 0.01
-    targets[int(all_values[0])] = 0.99
-    n.train(inputs, targets)
-    pass
+epochs  = 2
 
+for e in range(epochs):
+    for record in training_data_list:
+        # split entries with commas
+        all_values = record.split(',')
+        # scale and shift the entries
+        inputs = (numpy.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+        # create target values
+        targets = numpy.zeros(output_nodes) + 0.01
+        targets[int(all_values[0])] = 0.99
+        n.train(inputs, targets)
+        pass
+    pass
 
 # load testing datafiles
 
