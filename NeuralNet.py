@@ -2,7 +2,8 @@
 import numpy
 # import special math lib for the sigmoid function expit()
 import scipy.special
-
+# import matplotlib for plotting the symbols
+import matplotlib.pyplot
 
 
 # neural network class definition
@@ -34,18 +35,22 @@ class neuralNetwork:
         # convert input and target lists to 2D array
         inputs = numpy.array(inputs_list, ndmin=2).T
         targets = numpy.array(targets_list, ndmin=2).T
-        # calculate values for the hidden layer
+
+        # calculate input values for the hidden layer
         hidden_inputs = numpy.dot(self.wih, inputs)
         # apply activation function to calculate hidden outputs
         hidden_outputs = self.activation_function(hidden_inputs)
+
         # calculate values for the final layer
         final_inputs = numpy.dot(self.who, hidden_outputs)
         # apply activation function to calculate output outputs
         final_outputs = self.activation_function(final_inputs)
+
         # calculate the error which is targets - actual values
         output_errors = targets - final_outputs
         # backpropagate final error to hidden nodes by splitting according to weights
         hidden_errors = numpy.dot(self.who.T, output_errors)
+
         # update the weights between hidden and output layers
         self.who += self.lr * numpy.dot((output_errors * final_outputs * (1.0 - final_outputs)),
                                         numpy.transpose(hidden_outputs))
@@ -69,13 +74,68 @@ class neuralNetwork:
 
 
 # define the number of nodes
-input_nodes = 3
-hidden_nodes = 3
-output_nodes = 3
-# define the learning rate
-learning_rate = 0.3
-# create the neural network instance
+input_nodes = 784
+hidden_nodes = 100
+output_nodes = 10
 
+# define the learning rate
+learning_rate = 0.2
+
+#  create the neural network instance
 n = neuralNetwork(input_nodes, hidden_nodes, output_nodes, learning_rate)
 
-print(n.query([1.0, 2.0, -1.2]))
+# load training datafiles
+training_data_file = open("./mnist_dataset/mnist_train.csv", 'r')
+training_data_list = training_data_file.readlines()
+training_data_file.close()
+
+# pre-process each entry and train the neural network
+for record in training_data_list:
+    # split entries with commas
+    all_values = record.split(',')
+    # scale and shift the entries
+    inputs = (numpy.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+    # create target values
+    targets = numpy.zeros(output_nodes) + 0.01
+    targets[int(all_values[0])] = 0.99
+    n.train(inputs, targets)
+    pass
+
+
+# load testing datafiles
+
+test_data_file = open("./mnist_dataset/mnist_test.csv", 'r')
+test_data_list = test_data_file.readlines()
+test_data_file.close()
+# all_values = test_data_list[0].split(',')
+# print(n.query((numpy.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01))
+
+# test the correctness
+scorecard = []
+
+for record in test_data_list:
+    # split the record with commas
+    all_values = record.split(',')
+    # correct value is the first entry
+    correct_label = int(all_values[0])
+    print("correct label is", correct_label)
+    # scale and shift the inputs
+    inputs = (numpy.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+    # compute the output
+    outputs = n.query(inputs)
+    # find the label with the highest value
+    label = int(numpy.argmax(outputs))
+    print("network answer is", label)
+    # add score 1 if correct, 0 if incorrect
+    if label == correct_label:
+        scorecard.append(1)
+    else:
+        scorecard.append(0)
+        pass
+    pass
+
+
+# print(scorecard)
+scorecard_array = numpy.asarray(scorecard)
+print("Performance is", 100*scorecard_array.sum()/scorecard_array.size, "%")
+
